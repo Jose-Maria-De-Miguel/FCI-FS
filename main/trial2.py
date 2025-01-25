@@ -15,7 +15,7 @@ def bnToPDAG(bn_model):
     
     return PDAG.PDAG(v_names =[name for name in bn_model.nodes()], d_edges= bn_model.edges())
 
-def plotPGMpy(bn_model, file_path = f".//imagenes_pruebas//prueba.png"):
+def plotPGMpy(bn_model, file_path = f".//test_images//trial_image.png"):
     
     model_graphviz = bn_model.to_graphviz()
     # Set the engine to 'neato' using graph_attr
