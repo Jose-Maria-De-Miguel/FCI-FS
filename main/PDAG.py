@@ -382,7 +382,7 @@ class PDAG():
         
         return (self_edges - other_edges) | (other_edges - self_edges )
     
-    def get_confusion_matrix(self, other):
+    def get_graphical_metrics(self, other):
         """
         Return the confusion matrix of the {self} PDAG compared to the {other} PDAG plus tow other parameters; TD and FD
         TP -> number of true edges/arcs present
@@ -391,6 +391,10 @@ class PDAG():
         FN -> number of false absent edges
         TD -> number of true arcs present
         FD -> number of false arcs present
+        P  -> Precision, rate of correct edges discovered across all edges discovered
+        R  -> Recall, rate of edges discovered across all true edges that could have been discovered
+        F1 -> harmonic mean of Precision and recall
+        SHD-> Number of insertions, deletions, and arc reversals need to transform {self} into {other}
         """
         names =   set(self.names_dict.keys())
         if names != set(other.names_dict.keys()):
@@ -433,8 +437,11 @@ class PDAG():
                     else:
                         TN = TN + 1
                      
-                    
-        return [TP, FP, TN, FN, TD, FD]
+        P = TP/(TP + FP)
+        R = TP/(TP + FN)
+        F1 = (2*P*R)/(P+R)
+        SHD = FN + FP
+        return [TP, FP, TN, FN, TD, FD, P, R, F1, SHD]
         
     
     def __deepcopy__(self, memo):
