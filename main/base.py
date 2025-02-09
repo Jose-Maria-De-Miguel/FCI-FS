@@ -34,7 +34,7 @@ class BaseEstimator(object):
         # independence conditions. Look into PC.py.
         if self.data is not None:
             self.variables = list(data.columns.values)
-            print([var for var in self.variables])
+            #print([var for var in self.variables])
 
             if not isinstance(state_names, dict):
                 self.state_names = {
