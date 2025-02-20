@@ -19,6 +19,15 @@ import random
 import csv
 import numpy as np
 import time
+import sys
+
+from datetime import datetime
+
+# returns current date and time
+
+
+
+
 
 
 def bnToPDAG(bn_model):
@@ -103,8 +112,23 @@ def extract_random(data, percentage = 0.5):
     return newVars, initialVars
     
     
+if(len(sys.argv) < 2):
+    raise SystemError("One parameter is required.")
     
-    
+
+
+numPVal =  int(sys.argv[2])
+
+filePath = f"../log{numPVal}.txt"
+
+fdLog = open(filePath, "w")
+
+
+
+now = datetime.now()
+print(f"\nNew execution. P-value: {numPVal}. Date: {now}.\n", file=fdLog)
+
+
 INITIAL_P = 0.05
 
 NUM_VARS = 20
@@ -114,11 +138,10 @@ NEIGHBORHOOD_SIZE = 2
 
 NUM_INSTANCES = 500
 
-NUM_PVALS = 1
 
-NUM_RANDOM_DAGS = 1
+NUM_RANDOM_DAGS = 128
 
-NUM_ORDERS = 1
+NUM_ORDERS = 16
 
 NUM_PERCENTAGE = 10
 
@@ -126,54 +149,52 @@ PERCENT_STEP = 0.05
 
 percentList = [round(k*PERCENT_STEP, 2) for k in range(NUM_PERCENTAGE) ]
 
-for k in range(0, NUM_PVALS):
-    p = INITIAL_P/(2**k)
-    with open(f"output{k}.csv", mode='w', newline='') as file:
-        writer = csv.writer(file)
-        #Write a header row
-        colum_names = ['TP_orig', 'FP_orig', 'TN_orig', 'FN_orig', 'TO_orig', 'FO_orig', 'TD_orig', 'P_orig', 'R_orig', 'F1_orig', 'SHD_orig','numCITest_orig', 'time_orig', 'TP_stable', 'FP_stable', 'TN_stable', 'FN_stable', 'TO_stable', 'FO_stable', 'TD_stable', 'P_stable', 'R_stable', 'F1_stable', 'SHD_stable', 'numCITest_stable', 'time_stable']
-        FS_cols = [name for percentage in percentList  for name in [f'TP_{int(percentage*100)}Percent', 
+
+p = INITIAL_P/(2**numPVal)
+with open(f"output{numPVal}.csv", mode='w', newline='') as file:
+    writer = csv.writer(file)
+    #Write a header row
+    colum_names = ['TP_orig', 'FP_orig', 'TN_orig', 'FN_orig', 'TO_orig', 'FO_orig', 'TD_orig', 'P_orig', 'R_orig', 'F1_orig', 'SHD_orig','numCITest_orig', 'time_orig', 'TP_stable', 'FP_stable', 'TN_stable', 'FN_stable', 'TO_stable', 'FO_stable', 'TD_stable', 'P_stable', 'R_stable', 'F1_stable', 'SHD_stable', 'numCITest_stable', 'time_stable']
+    FS_cols = [name for percentage in percentList  for name in [f'TP_{int(percentage*100)}Percent', 
         f'FP_{int(percentage*100)}Percent', f'TN_{int(percentage*100)}Percent', f'FN_{int(percentage*100)}Percent', 
         f'TO_{int(percentage*100)}Percent', f'FO_{int(percentage*100)}Percent', f'TD_{int(percentage*100)}Percent',
         f'P_{int(percentage*100)}Percent', f'R_{int(percentage*100)}Percent', f'F1_{int(percentage*100)}Percent', 
         f'SHD_{int(percentage*100)}Percent', f'numCITestMarginal__{int(percentage*100)}Percent', f'timeMarginal__{int(percentage*100)}Percent', f'numCITestFS__{int(percentage*100)}Percent', f'timeFS__{int(percentage*100)}Percent']]
-        colum_names = colum_names + FS_cols
-        writer.writerow(colum_names)
-        for j in range(0, NUM_RANDOM_DAGS):
+    colum_names = colum_names + FS_cols
+    writer.writerow(colum_names)
+    for j in range(0, NUM_RANDOM_DAGS):
             
-            n_states = np.random.randint(low=3, high=6, size=NUM_VARS)
-            #Generate random DAG
-            model = BayesianNetwork.get_random(n_nodes=NUM_VARS, edge_prob=NEIGHBORHOOD_SIZE/(NUM_VARS-1), n_states = n_states)
+        n_states = np.random.randint(low=3, high=6, size=NUM_VARS)
+        #Generate random DAG
+        model = BayesianNetwork.get_random(n_nodes=NUM_VARS, edge_prob=NEIGHBORHOOD_SIZE/(NUM_VARS-1), n_states = n_states)
             
-            PDAG_base = bnToPDAG(model)
-            PDAG_base.simplifyPDAG()
-            PDAG_base.applyMeek()
+        PDAG_base = bnToPDAG(model)
+        PDAG_base.simplifyPDAG()
             
-            # Simulate data
-            
-            
-            data = model.simulate(n_samples=NUM_INSTANCES)
-            variables = list(data.columns)
-            estFS = PCFS(data) #PC-FS
-            print("\nMPC-Stable\n")
-            print(f"\nSIMULATE DATA: {j}:{NUM_RANDOM_DAGS} - {k}:{NUM_PVALS} \n")
+         # Simulate data
 
+        data = model.simulate(n_samples=NUM_INSTANCES)
+        variables = list(data.columns)
+        estFS = PCFS(data) #PC-FS
             
-            timeStable0 = time.time()
+        
+
+        timeStable0 = time.time()
             
-            PDAG_stable, nCITestStable =  estFS.estimate(variant = "MPC-stable", ci_test='chi_square', max_cond_vars=3,  significance_level= p, new_vars = variables)
+        PDAG_stable, nCITestStable =  estFS.estimate(variant = "MPC-stable", ci_test='chi_square', max_cond_vars=3,  significance_level= p, new_vars = variables)
             
-            timeStable1 = time.time()
+        timeStable1 = time.time()
             
-            totalTimeStable = timeStable1 - timeStable0
+        totalTimeStable = timeStable1 - timeStable0
             
-            stable_metrics = PDAG_stable.getGraphicalMetrics(PDAG_base)
+        stable_metrics = PDAG_stable.getGraphicalMetrics(PDAG_base)
             
-            stable_metrics =  stable_metrics + [nCITestStable, totalTimeStable ]
+        stable_metrics =  stable_metrics + [nCITestStable, totalTimeStable ]
             
             
-            print("Stable learned")
-            for i in range(0, NUM_ORDERS):
+        
+        for i in range(0, NUM_ORDERS):
+
                 data = random_var_order(data) 
                 
                 estFS = PCFS(data) #PC-FS
@@ -220,19 +241,9 @@ for k in range(0, NUM_PVALS):
                 
                 
                 newRow = orig_metrics + stable_metrics + fs_metrics
+                print(f"\nSIMULATE DATA: {numPVal} - {j+1}:{NUM_RANDOM_DAGS} - {i+1}:{NUM_ORDERS}.\n", file=fdLog)
                 
                 writer.writerow(newRow)
 
-print("Finished")
+print(f"Finished. P-value. {numPVal}", file=fdLog)
                     
-                
-                    
-                    
-                
-                
-            
-        
-        
-        
-
-    

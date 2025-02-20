@@ -7,7 +7,7 @@ Created on Tue Nov 19 16:52:02 2024
 from PDAG import PDAG
 from base import StructureEstimator
 from itertools import chain, combinations
-import sys
+
 from pgmpy.estimators.CITests import *
 
 import copy
@@ -204,7 +204,7 @@ class PCFS(StructureEstimator):
                         break
 
             if lim_neighbors >= max_cond_vars:
-                # print("Reached maximum number of allowed conditional variables. Exiting", file=sys.stderr )
+                # print("Reached maximum number of allowed conditional variables. Exiting" )
                 break
             lim_neighbors += 1
         
