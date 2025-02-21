@@ -117,7 +117,7 @@ if(len(sys.argv) < 2):
     
 
 
-numPVal =  int(sys.argv[2])
+numPVal =  int(sys.argv[1])
 
 filePath = f"../log{numPVal}.txt"
 
@@ -139,9 +139,9 @@ NEIGHBORHOOD_SIZE = 2
 NUM_INSTANCES = 500
 
 
-NUM_RANDOM_DAGS = 128
+NUM_RANDOM_DAGS = 1
 
-NUM_ORDERS = 16
+NUM_ORDERS = 1
 
 NUM_PERCENTAGE = 10
 
